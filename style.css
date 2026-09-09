@@ -1,0 +1,256 @@
+@font-face {
+    font-family: 'IRANSans';
+   
+   
+    src: url('Iraniansans.ttflo') 
+    format('truetype');
+    font-weight: normal;
+  font-style:normal ;
+}
+
+body{
+   font-family: 'IRANSans' 
+}
+
+.main{
+    direction: rtl;
+    font-family: 'IRANSans';
+}
+
+.main_search{
+    direction: rtl;
+    padding: 16px;
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,.12);
+}
+
+.search_divar{
+    background-color: #f5f5f5;
+    height: 40px;
+    border-radius: 5px;
+}
+
+.search1{
+    font-size: 16px;
+    line-height: 40px;
+    padding-right: 10px;
+    padding-left: 10px;
+    color: rgba(0,0,0,.32);
+}
+
+.search_text{
+    color: rgb(0 0 0 / 32%);
+    font-weight: 400;
+
+}
+.search_text2{
+    float: left;
+    height: 24px;
+    margin-top: 6px;
+    line-height: 24px;
+    padding: 0px 12px;
+    color: #7d7d7d;
+    border-right: 1px solid #cdcdcd;
+
+}
+
+.filter1{
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,.12);
+    width: 100%;
+    height: 48px;
+    transition: top .24s ease-in-out;
+    margin-top: 2px;
+    direction: rtl;
+    padding-right: 10px;
+    overflow-x:scroll;
+}
+
+.filter2{
+    width: 1000px;
+}
+
+button{
+    font-family: 'IRANSans';
+    padding: 0px 12px;
+    border: 1px solid #d4d4d4;
+    background: white;
+    color: #7c7c7c;
+    border-radius: 100px;
+    height: 32px;
+    font-weight: 400;
+    font-size: 14px;
+    margin-top: 7px;
+}
+
+.h1{
+    font-size: 12px;
+    padding-right: 20px;
+    font-weight: 100;
+    color : gray;
+}
+
+.agahi1{
+   
+
+width: 100%;
+
+padding: 8px 16px;
+}
+
+.agahi2{
+    border: 1px solid #e2e2e2;
+    padding: 14px;
+    border-radius: 5px;
+}
+
+img{
+    width: 100%;
+    border-radius: 5px;
+    max-width: 204px;
+    margin: auto;
+
+}
+
+.text1{
+    font-weight: 500;
+
+}
+
+.text2{
+    font-size: 14px;
+    font-weight: 100;
+    color: rgb(173, 173, 173);
+}
+
+.redtext{
+    font-size: 12px;
+    font-weight: 400;
+    color: #a62626;
+}
+
+.divbottom{
+    height: 56px;
+    position: fixed;
+    background: rgba(255,255,255,.98);
+    width: 100%;
+    z-index: 100;
+    display: block;
+    bottom: 0;
+    box-shadow: 0 -1px 2px 0 rgba(0,0,0,.12);
+}
+.divbottom2{
+    height: 56px;
+    position: fixed;
+    background: rgba(255,255,255,.98);
+    width: 100%;
+    z-index: 100;
+    display: block;
+    bottom: 57px;
+    box-shadow: 0 -1px 2px 0 rgba(0,0,0,.12);
+    padding: 0px 10px;
+}
+
+.bottom2{
+    display: flex;
+    width: 100%;
+}
+
+.btn_bottom{
+    padding: 0px 0px;
+    text-align: center;
+    line-height: 25px;
+    color: #878787;
+    width: 100%;
+}
+
+.in_divar{
+     border: none;
+    width: 100%;
+    height: 34px;
+    margin: 0;
+    vertical-align: top;
+    margin-top: 3px;
+    direction: rtl;
+    outline: none;
+    padding-right:15px;
+   
+}
+
+.lb_divar{
+    padding: 0px;  padding-bottom: 6px;   font-size: 16px; color: gray; margin: 0px;
+}
+
+.btn_divar{
+    background-color: #be3737;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1rem;
+    font-weight: 500;
+    height: 2.5rem;
+    justify-content: center;
+    min-width: 6rem;
+    outline: none;
+    overflow: hidden;
+    padding: 0 16px;
+    width: 100%;
+    line-height: 38px; 
+}
+
+.img_divar{
+    width: 100%;
+    text-align: left;
+}
+
+
+.my_chat{
+    background-color: #f0faff;
+    padding: 10px;
+    max-width: 65%;
+    margin-right: 10px;
+    margin-top: 10px;
+    border-radius: 20px 20px 0px 20px;
+    color: #484848;
+    font-weight: 100;
+    font-size: 15px;
+    display: inline-block;
+}
+.your_chat{
+    margin: auto;
+    background-color: #f5f5f5;
+    padding: 10px;
+    max-width: 65%; 
+    margin-top: 10px;
+    border-radius: 20px 20px 20px 0px;
+    color: #484848;
+    font-weight: 100;
+    font-size: 15px;
+    text-align: right;
+    margin-left: 10px;
+    display: inline-block;
+
+}
+
+.chat_txt{
+    border: none;
+    width: 80%;
+    height: 34px;
+    margin: 0;
+    vertical-align: top;
+    margin-top: 3px;
+    direction: rtl;
+    outline: none;
+    height: 45px;
+}
+
+.my_chatblock{
+    width: 100%;
+}
+
+
+.your_chatblock{
+    width: 100%;
+    text-align: left;
+}
