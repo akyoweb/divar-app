@@ -4,29 +4,27 @@ require("db.php");
 date_default_timezone_set("Asia/Tehran");
 mysqli_set_charset($db, 'utf8');
 
-$onvan='';
-$karkard='';
-$price='';
-$image_name= '';
+$onvan = '';
+$karkard = '';
+$price = '';
+$image_name = '';
 
 
- 
 
-if (isset($_POST['onvan']) && isset($_POST['karkard'])){
-$onvan=$_POST['onvan'];
-$karkard=$_POST['karkard'];
-$price=$_POST['price'];
-$image_name=$_POST['image_name'];
 
-$saat='دقایقی پیش در تهران';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['onvan'], $_POST['karkard'])) {
+    $onvan = trim((string) $_POST['onvan']);
+    $karkard = trim((string) $_POST['karkard']);
+    $price = trim((string) ($_POST['price'] ?? ''));
+    $image_name = preg_replace('/[^0-9a-zA-Z._-]/', '', (string) ($_POST['image_name'] ?? ''));
 
-$image_name2='uploads/'. $image_name;
+    $saat = 'دقایقی پیش در تهران';
 
-$sql = mysqli_query($db, " 
+    $image_name2 = 'uploads/' . $image_name;
 
-insert into divar (onvan, karkard,price,time,img) values ('$onvan' , '$karkard' , '$price', '$saat', '$image_name2')  
-
-" );
+    $stmt = mysqli_prepare($db, 'INSERT INTO divar (onvan, karkard, price, time, img) VALUES (?,?,?,?,?)');
+    mysqli_stmt_bind_param($stmt, 'sssss', $onvan, $karkard, $price, $saat, $image_name2);
+    mysqli_stmt_execute($stmt);
 
 
 }
@@ -36,159 +34,167 @@ insert into divar (onvan, karkard,price,time,img) values ('$onvan' , '$karkard' 
 
 
 
-if(isset($_POST["submit_image"])) {
+if (isset($_POST["submit_image"])) {
 
 
     $target_dir = "uploads/";
     $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
-    
+
     $uploadOk = 1;
 
-    $image_name= random_int(10000000,99999999).'.jpg';
+    $image_name = random_int(10000000, 99999999) . '.jpg';
 
-    
-    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], "uploads/".$image_name)) {
+
+    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], "uploads/" . $image_name)) {
         "آپلود عکس با موفقیت انجام شد.";
 
 
 
 
-    
+
     } else {
-    
+
         echo "آپلود با خطا مواجه شد.";
     }
-    
-    
+
+
 }
 
 
 
- 
+
 
 
 
 ?>
 
 <html>
+
 <head>
-   
-<meta charset="utf-8">
-<title>دیوار تهران: مرجع انواع نیازمندی و آگهی‌های نو و دست دو در شهر تهران</title>
-  <meta name="viewport" content="viewport-fit=cover,width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
 
-  <link href="bootstrap.min.css" rel="stylesheet" > 
- 
- 
-  <!-- اینجا دقت کنید که Font Awesome 
+    <meta charset="utf-8">
+    <title>دیوار تهران: مرجع انواع نیازمندی و آگهی‌های نو و دست دو در شهر تهران</title>
+    <meta name="viewport"
+        content="viewport-fit=cover,width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+
+    <!-- اینجا دقت کنید که Font Awesome
   رو درست بنویسید -->
-  <link rel="stylesheet" href="fontawesome/css/all.min.css"   />
- 
-
-  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="divar.png">
+    <link rel="stylesheet" href="style.css">
+
+
+    <link rel="icon" type="image/png" sizes="32x32" href="divar.png">
 
 </head>
 
 <body class="main">
 
 
-<div class="main_search">
-<div style="font-weight: bold;">ثبت آگهی جدید</div>
-</div>
-  
-
-<p style="padding: 20px; padding-bottom:0px;">اطلاعات زیر را تکمیل کنید:</p>
+    <div class="main_search">
+        <div style="font-weight: bold;">ثبت آگهی جدید</div>
+    </div>
 
 
+    <p style="padding: 20px; padding-bottom:0px;">اطلاعات زیر را تکمیل کنید:</p>
 
-<div class="main_search" style="box-shadow: none; padding-top: 0;" >
-<p   class="lb_divar">بارگذاری تصویر:</p> 
-    
-<?php 
 
-if (strlen($image_name)>6){
 
-echo'
+    <div class="main_search" style="box-shadow: none; padding-top: 0;">
+        <p class="lb_divar">بارگذاری تصویر:</p>
+
+        <?php
+
+        if (strlen($image_name) > 6) {
+
+            echo '
 <div class="img_divar">
-<img style="width: auto; max-height: 100px;" src="uploads/'.$image_name.'">
+<img style="width: auto; max-height: 100px;" src="uploads/' . $image_name . '">
 </div>
 ';
 
-}else{
-    echo '
-    <form action="agahi.php" method="post" enctype="multipart/form-data"> 
-    <input style="width: 65%;" type="file" name="fileToUpload" id="fileToUpload">
+        } else {
+            echo '
+    <form action="agahi.php" method="post" enctype="multipart/form-data">
+    <input class="upload-control" type="file" name="fileToUpload" id="fileToUpload" accept="image/jpeg,image/png,image/webp" required>
     <input type="submit" class="btn btn-success" value="آپلود تصویر" name="submit_image">
   </form>
   ';
-}
+        }
 
 
-?>
+        ?>
 
 
-</div>
+    </div>
 
 
-<form method="post" action="agahi.php">
- 
-<div class="main_search" style="box-shadow: none; padding-top: 0;" >
-<p   class="lb_divar">عنوان:</p> 
-    <div class="search_divar" style="    background-color: #ffffff;
+    <form method="post" action="agahi.php" class="ad-page" novalidate>
+
+        <div class="main_search" style="box-shadow: none; padding-top: 0;">
+            <p class="lb_divar">عنوان:</p>
+            <div class="search_divar" style="    background-color: #ffffff;
     border: 1px solid #eeeeee;">
-      
-        <input type="text" value="<?php echo $onvan; ?>" name="onvan" placeholder="عنوان آگهی" maxlength="100" class="in_divar">
 
-        <input type="hidden" name="image_name"  value="<?php echo $image_name; ?>">
-       
-    </div>
- 
-</div>
- 
+                <input type="text" value="<?php echo htmlspecialchars($onvan, ENT_QUOTES, 'UTF-8'); ?>" name="onvan"
+                    placeholder="عنوان آگهی" maxlength="100" minlength="3" class="form-control-divar" required>
+
+                <input type="hidden" name="image_name" value="<?php echo $image_name; ?>">
+
+            </div>
+
+        </div>
 
 
-<div class="main_search" style="box-shadow: none; padding-top: 0;" >
-<p   class="lb_divar">توضیحات</p> 
-    <div class="search_divar" style="    background-color: #ffffff;
+
+        <div class="main_search" style="box-shadow: none; padding-top: 0;">
+            <p class="lb_divar">توضیحات</p>
+            <div class="search_divar" style="    background-color: #ffffff;
     border: 1px solid #eeeeee;">
-      
-        <input  type="text"  value="<?php echo $karkard; ?>" name="karkard" placeholder="توضیحات را وارد کنید" maxlength="100" class="in_divar">
-       
-    </div>
- 
-</div>
+
+                <textarea name="karkard" placeholder="توضیحات را وارد کنید" maxlength="1000" minlength="5"
+                    class="form-control-divar"
+                    required><?php echo htmlspecialchars($karkard, ENT_QUOTES, 'UTF-8'); ?></textarea>
+
+            </div>
+
+        </div>
 
 
 
-<div class="main_search" style="box-shadow: none; padding-top: 0;" >
-<p   class="lb_divar">قیمت:</p> 
-    <div class="search_divar" style="    background-color: #ffffff;
+        <div class="main_search" style="box-shadow: none; padding-top: 0;">
+            <p class="lb_divar">قیمت:</p>
+            <div class="search_divar" style="    background-color: #ffffff;
     border: 1px solid #eeeeee;">
-      
-        <input  type="tel"  value="<?php echo $price; ?>" name="price" placeholder="قیمت را وارد کنید" maxlength="100" class="in_divar">
-       
-    </div>
- 
-</div>
+
+                <input type="text" value="<?php echo htmlspecialchars($price, ENT_QUOTES, 'UTF-8'); ?>" name="price"
+                    placeholder="قیمت را وارد کنید" maxlength="20" inputmode="numeric" pattern="[0-9۰-۹, ]+"
+                    class="form-control-divar" required>
+
+            </div>
+
+        </div>
 
 
 
 
 
 
-<div class="main_search" style="box-shadow: none; padding-top: 0;" >
-<p   class="lb_divar">دسته ها</p> 
-    <div class="search_divar" style="    background-color: #ffffff;
+        <div class="main_search" style="box-shadow: none; padding-top: 0;">
+            <p class="lb_divar">دسته ها</p>
+            <div class="search_divar" style="    background-color: #ffffff;
     border: 1px solid #eeeeee;">
-      
-        <input  type="tel"  value="" name="" placeholder="دسته بندی مورد نظر حودرا وارد کنید" maxlength="100" class="in_divar">
-       
-    </div>
- 
-</div>
+
+                <input type="tel" value="" name="" placeholder="دسته بندی مورد نظر حودرا وارد کنید" maxlength="100"
+                    class="in_divar">
+
+            </div>
+
+        </div>
 
 
 
@@ -207,25 +213,26 @@ echo'
 
 
 
- 
-
-
-    <br>
-    <br>
-    <br>
-    <div class="divbottom2">
-
-    
-<button type="submit" tabindex="0" class="btn_divar"><span >ثبت آگهی</span></button>
-
-    </div>
 
 
 
-</form>
+        <br>
+        <br>
+        <br>
+        <div class="divbottom2">
 
 
-<?php include("footer.php") ?>
-    
+            <button type="submit" tabindex="0" class="btn_divar"><span>ثبت آگهی</span></button>
+
+        </div>
+
+
+
+    </form>
+
+
+    <?php include("footer.php") ?>
+
 </body>
+
 </html>

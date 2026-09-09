@@ -11,75 +11,66 @@ $code="";
 
 $buttontext='تأیید';
 
-if (isset($_POST['mobile']) && isset($_POST['code'])==false  ){
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mobile']) && !isset($_POST['code'])){
 
-    $mobile= $_POST['mobile'];
+    $mobile = preg_replace('/[^0-9]/', '', (string)$_POST['mobile']);
+    if (!preg_match('/^09[0-9]{9}$/', $mobile)) { $mobile = ''; }
 
     $code=random_int(100000,999999);
 
-    $sql = mysqli_query($db, " insert into smscode (mobile, smscode) values ('$mobile' , '$code')  " );
+    $stmt = mysqli_prepare($db, 'INSERT INTO smscode (mobile, smscode) VALUES (?, ?)');
+    mysqli_stmt_bind_param($stmt, 'ss', $mobile, $code);
+    mysqli_stmt_execute($stmt);
 
 
-    
+
     $APIKey = "wedwefweeeeeef";
     $SecretKey = "wefwefwefwewewew";
-    
-       
+
+
     try {
-      
+
     $data = array(
         "ParameterArray" => array(
-            
+
              array(
                 "Parameter" => "code1",
-                "ParameterValue" => "$code" 
-            ),  
+                "ParameterValue" => "$code"
+            ),
             array(
                 "Parameter" => "name1",
                 "ParameterValue" => 'akyo'
-            ) 
+            )
         ),
         "Mobile" => $mobile,
         "TemplateId" => "4430"
     );
-    
-    
-       
+
+
+
     $SmsIR_UltraFastSend = new SmsIR_UltraFastSend($APIKey,$SecretKey);
     $UltraFastSend = $SmsIR_UltraFastSend->UltraFastSend($data);
     $sms_status=$UltraFastSend;
-    
-    //  var_dump($UltraFastSend); 
+
+    //  var_dump($UltraFastSend);
     } catch (Exception $e) {
     echo 'Error UltraFastSend : '.$e->getMessage();
     }
-    
-    
-    
-    echo  $sms_status.'<br>'; 
-    
-    
 
 
 
-
-
-
+    $sms_status = $sms_status ?? '';
     $buttontext='ورود';
 }
 
 
-if (isset($_POST['mobile']) && isset($_POST['code']) && strlen($_POST['code'])==6){
-
-    $mobile= $_POST['mobile'];
-    $code=$_POST['code'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mobile'], $_POST['code']) && preg_match('/^[0-9]{6}$/', $_POST['code'])){
+    $mobile = preg_replace('/[^0-9]/', '', (string)$_POST['mobile']);
+    $code = (string)$_POST['code'];
     $code_org='';
 
-$sql2=mysqli_query($db,"
-
-select * from smscode where mobile = '$mobile' order by id desc limit 1
-
-");
+$stmt = mysqli_prepare($db, 'SELECT smscode FROM smscode WHERE mobile = ? ORDER BY id DESC LIMIT 1');
+mysqli_stmt_bind_param($stmt, 's', $mobile); mysqli_stmt_execute($stmt); $sql2 = mysqli_stmt_get_result($stmt);
 
 if ($row=mysqli_fetch_assoc($sql2)){
     $code_org=$row['smscode'];
@@ -89,7 +80,9 @@ if ($row=mysqli_fetch_assoc($sql2)){
 
 
 if ($code_org == $code){
-    $sql = mysqli_query($db, " insert into user (mobile, password) values ('$mobile' , '$code')  " );
+    $stmt = mysqli_prepare($db, 'INSERT INTO user (mobile, password) VALUES (?, ?)');
+    $passwordHash = password_hash($code, PASSWORD_DEFAULT);
+    mysqli_stmt_bind_param($stmt, 'ss', $mobile, $passwordHash); mysqli_stmt_execute($stmt);
 
 echo 'کد صحیح است';
 echo '<meta http-equiv="refresh" content="1; url=agahi.php">';
@@ -112,7 +105,7 @@ echo '<meta http-equiv="refresh" content="1; url=agahi.php">';
 
 
 
- 
+
 
 
 class SmsIR_UltraFastSend
@@ -240,7 +233,7 @@ class SmsIR_UltraFastSend
         curl_close($ch);
         return $result;
     }
-} 
+}
 
 
 
@@ -248,18 +241,18 @@ class SmsIR_UltraFastSend
 
 <html>
 <head>
-   
+
 <meta charset="utf-8">
 <title>دیوار تهران: مرجع انواع نیازمندی و آگهی‌های نو و دست دو در شهر تهران</title>
-  <meta name="viewport" content="viewport-fit=cover,width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <meta name="viewport" content="viewport-fit=cover,width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <link href="bootstrap.min.css" rel="stylesheet" > 
- 
- 
-  <!-- اینجا دقت کنید که Font Awesome 
+  <link href="bootstrap.min.css" rel="stylesheet" >
+
+
+  <!-- اینجا دقت کنید که Font Awesome
   رو درست بنویسید -->
   <link rel="stylesheet" href="fontawesome/css/all.min.css"   />
- 
+
 
   <link rel="stylesheet" href="style.css">
 
@@ -274,7 +267,7 @@ class SmsIR_UltraFastSend
 <div class="main_search">
 <div style="font-weight: bold;">ورود به حساب کاربری</div>
 </div>
- 
+
 
 <br>
 
@@ -284,14 +277,14 @@ class SmsIR_UltraFastSend
 
 
 
-<form method="post" action="login.php">
- 
+<form method="post" action="login.php" class="login-page" novalidate>
+
 <div class="main_search" style="box-shadow: none;" >
     <div class="search_divar" style="    background-color: #ffffff;
     border: 1px solid #eeeeee;">
-        <i class="fa-solid fa-phone search1"></i> 
+        <i class="fa-solid fa-phone search1"></i>
 
-        <input id="shomare" type="tel" value="<?php echo $mobile; ?>" name="mobile" placeholder="شماره موبایل" maxlength="11" style="    border: none;
+        <input id="shomare" type="tel" value="<?php echo htmlspecialchars($mobile, ENT_QUOTES, 'UTF-8'); ?>" name="mobile" placeholder="شماره موبایل" maxlength="11" minlength="11" pattern="09[0-9]{9}" inputmode="numeric" autocomplete="tel" required style="    border: none;
     width: 60%;
     height: 34px;
     margin: 0;
@@ -300,7 +293,7 @@ class SmsIR_UltraFastSend
     direction: ltr;
     outline: none;
     ">
-        <label class="search_text2" style="direction: ltr;  
+        <label class="search_text2" style="direction: ltr;
     background: #f4f4f4;
     border-radius: 15px;
     padding: 0px
@@ -316,7 +309,7 @@ px
 
 <br>
 
-<?php 
+<?php
 
 if (isset($_POST['mobile'])){
 
@@ -324,9 +317,9 @@ if (isset($_POST['mobile'])){
 
     <div class="search_divar" style="    background-color: #ffffff;
     border: 1px solid #eeeeee;">
-        <i class="fa-solid fa-code search1"></i> 
+        <i class="fa-solid fa-code search1"></i>
 
-        <input name="code" placeholder=" کد ۶ رقمی" maxlength="6" style="    border: none;
+        <input name="code" placeholder=" کد ۶ رقمی" maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required minlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required style="    border: none;
     width: 60%;
     height: 34px;
     margin: 0;
@@ -335,7 +328,7 @@ if (isset($_POST['mobile'])){
     direction: ltr;
     outline: none;
     ">
-        <label class="search_text2" style="direction: ltr;   
+        <label class="search_text2" style="direction: ltr;
     border-radius: 15px;
     padding: 0px
 px
@@ -374,7 +367,6 @@ px
 
 
 </div>
- 
 
 
 
@@ -397,7 +389,8 @@ px
 
 
 
- 
+
+
 
 
     <br>
@@ -405,7 +398,7 @@ px
     <br>
     <div class="divbottom2">
 
-    
+
 <button onclick="valid()" type="submit" tabindex="0" style="     background-color: #be3737;
     border: 1px solid transparent;
     border-radius: 4px;
@@ -432,7 +425,7 @@ px
 
 
 <?php include("footer.php") ?>
-    
+
 
 
 
@@ -443,9 +436,9 @@ let n= document.getElementById('shomare').value;
 function valid() {
     if (n.length>11) {
        alert("شماره نمیتواند کمتر از 11 باشد")
-        
+
     }
-    
+
 };
 
 
