@@ -14,11 +14,17 @@ $buttontext='تأیید';
 
 if (isset($_POST['mobile']) && isset($_POST['code'])==false  ){
 
-    $mobile= $_POST['mobile'];
+    $mobile = preg_replace('/[^0-9]/', '', (string) $_POST['mobile']);
+    if (!preg_match('/^09[0-9]{9}$/', $mobile)) {
+        http_response_code(422);
+        exit('شماره موبایل نامعتبر است');
+    }
 
     $code=random_int(100000,999999);
 
-    $sql = mysqli_query($db, " insert into smscode (mobile, smscode) values ('$mobile' , '$code')  " );
+    $stmt = mysqli_prepare($db, 'INSERT INTO smscode (mobile, smscode) VALUES (?, ?)');
+    mysqli_stmt_bind_param($stmt, 'ss', $mobile, $code);
+    mysqli_stmt_execute($stmt);
 
 
 

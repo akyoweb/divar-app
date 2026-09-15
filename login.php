@@ -1,24 +1,33 @@
 <?php
-include("footer.php");
+session_start();
 require("db.php ");
 // require("../sms_api.php");
 date_default_timezone_set("Asia/Tehran");
 mysqli_set_charset($db, 'utf8');
 
-$mobile="";
-$code="";
+$mobile = "";
+$code = "";
+$form_message = '';
+$message_type = '';
+$step = 'mobile';
 
-
-$buttontext='تأیید';
+$buttontext = 'تأیید';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mobile']) && !isset($_POST['code'])){
 
     $mobile = preg_replace('/[^0-9]/', '', (string)$_POST['mobile']);
-    if (!preg_match('/^09[0-9]{9}$/', $mobile)) { $mobile = ''; }
+    if (!preg_match('/^09[0-9]{9}$/', $mobile)) {
+        $mobile = '';
+        $form_message = 'شماره موبایل نامعتبر است. شماره‌ای مانند ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.';
+        $message_type = 'error';
+    }
 
     $code=random_int(100000,999999);
 
-    $stmt = mysqli_prepare($db, 'INSERT INTO smscode (mobile, smscode) VALUES (?, ?)');
+    $step = 'code';
+    $buttontext = 'ورود';
+
+    $stmt = mysqli_prepare($db, 'INSERT INTO smscode (mobile, smscode, created_at) VALUES (?, ?, NOW())');
     mysqli_stmt_bind_param($stmt, 'ss', $mobile, $code);
     mysqli_stmt_execute($stmt);
 
@@ -53,48 +62,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mobile']) && !isset($
     $sms_status=$UltraFastSend;
 
     //  var_dump($UltraFastSend);
-    } catch (Exception $e) {
-    echo 'Error UltraFastSend : '.$e->getMessage();
+        } catch (Exception $e) {
+        $form_message = 'خطا در ارسال پیامک. دوباره تلاش کنید.';
+        $message_type = 'error';
+        }
+
+        // اگر ارسال پیامک موفق بود، پیام موفقیت نمایش داده می‌شود
+        if ($message_type === '') {
+            $form_message = 'کد تأیید به شماره ' . $mobile . ' پیامک شد.';
+            $message_type = 'success';
+        }
     }
 
 
-
-    $sms_status = $sms_status ?? '';
-    $buttontext='ورود';
-}
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mobile'], $_POST['code']) && preg_match('/^[0-9]{6}$/', $_POST['code'])){
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mobile'], $_POST['code'])) {
     $mobile = preg_replace('/[^0-9]/', '', (string)$_POST['mobile']);
     $code = (string)$_POST['code'];
-    $code_org='';
+    $step = 'code';
+    $buttontext = 'ورود';
+    $code_org = '';
+    $code_id = null;
 
-$stmt = mysqli_prepare($db, 'SELECT smscode FROM smscode WHERE mobile = ? ORDER BY id DESC LIMIT 1');
-mysqli_stmt_bind_param($stmt, 's', $mobile); mysqli_stmt_execute($stmt); $sql2 = mysqli_stmt_get_result($stmt);
+    if (!preg_match('/^09[0-9]{9}$/', $mobile)) {
+        $form_message = 'شماره موبایل نامعتبر است.';
+        $message_type = 'error';
+    } elseif (!preg_match('/^[0-9]{6}$/', $code)) {
+        $form_message = 'کد باید ۶ رقم باشد.';
+        $message_type = 'error';
+    } else {
 
-if ($row=mysqli_fetch_assoc($sql2)){
-    $code_org=$row['smscode'];
-}
+        $stmt = mysqli_prepare($db, 'SELECT id, smscode FROM smscode WHERE mobile = ? AND created_at >= (NOW() - INTERVAL 5 MINUTE) ORDER BY id DESC LIMIT 1');
+        mysqli_stmt_bind_param($stmt, 's', $mobile);
+        mysqli_stmt_execute($stmt);
+        $sql2 = mysqli_stmt_get_result($stmt);
 
-// echo $code_org;
+        if ($row = mysqli_fetch_assoc($sql2)) {
+            $code_id = (int) $row['id'];
+            $code_org = (string) $row['smscode'];
+        }
+        mysqli_stmt_close($stmt);
 
+        if ($code_id !== null && hash_equals($code_org, $code)) {
+            $stmt = mysqli_prepare($db, 'SELECT id FROM user WHERE mobile = ? LIMIT 1');
+            mysqli_stmt_bind_param($stmt, 's', $mobile);
+            mysqli_stmt_execute($stmt);
+            $user_result = mysqli_stmt_get_result($stmt);
+            $user = mysqli_fetch_assoc($user_result);
+            mysqli_stmt_close($stmt);
 
-if ($code_org == $code){
-    $stmt = mysqli_prepare($db, 'INSERT INTO user (mobile, password) VALUES (?, ?)');
-    $passwordHash = password_hash($code, PASSWORD_DEFAULT);
-    mysqli_stmt_bind_param($stmt, 'ss', $mobile, $passwordHash); mysqli_stmt_execute($stmt);
+            if ($user) {
+                $user_id = (int) $user['id'];
+            } else {
+                $stmt = mysqli_prepare($db, 'INSERT INTO user (mobile, password) VALUES (?, ?)');
+                $passwordHash = password_hash($code, PASSWORD_DEFAULT);
+                mysqli_stmt_bind_param($stmt, 'ss', $mobile, $passwordHash);
+                mysqli_stmt_execute($stmt);
+                $user_id = mysqli_insert_id($db);
+                mysqli_stmt_close($stmt);
+            }
 
-echo 'کد صحیح است';
-echo '<meta http-equiv="refresh" content="1; url=agahi.php">';
+            // کد مصرف‌شده پاک می‌شود تا دوباره قابل استفاده نباشد
+            $stmt = mysqli_prepare($db, 'DELETE FROM smscode WHERE mobile = ?');
+            mysqli_stmt_bind_param($stmt, 's', $mobile);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
 
-}else{
-    echo 'کد اشتباه است';
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['mobile'] = $mobile;
 
-}
-
-
-
-}
+            header('Location: agahi.php');
+            exit;
+                } else {
+                    $form_message = 'کد وارد شده اشتباه یا منقضی شده است.';
+                    $message_type = 'error';
+                }
+            }
+        }
 
 
 
@@ -277,7 +321,17 @@ class SmsIR_UltraFastSend
 
 
 
-<form method="post" action="login.php" class="login-page" novalidate>
+<?php if ($form_message !== '') {
+    $msg_color = ($message_type === 'success') ? '#1a8917' : '#be3737';
+    $msg_bg = ($message_type === 'success') ? '#e8f5e9' : '#fdecea';
+    ?>
+    <div style="margin: 0 20px 12px; padding: 10px 14px; border-radius: 8px; font-size: 14px;
+                color: <?php echo $msg_color; ?>; background: <?php echo $msg_bg; ?>">
+        <?php echo htmlspecialchars($form_message, ENT_QUOTES, 'UTF-8'); ?>
+    </div>
+<?php } ?>
+
+<form method="post" action="login.php" class="login-page">
 
 <div class="main_search" style="box-shadow: none;" >
     <div class="search_divar" style="    background-color: #ffffff;
@@ -311,7 +365,7 @@ px
 
 <?php
 
-if (isset($_POST['mobile'])){
+if ($step === 'code'){
 
     echo '
 
